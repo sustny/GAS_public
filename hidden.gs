@@ -5,30 +5,28 @@
 //
 
 function hidden() {
-  var sheet = SpreadsheetApp.getActive().getSheetByName('集計');
-  var range, value
+  var sheet = SpreadsheetApp.getActive().getSheetByName('集計'), value1, value2
+  var i=0, j=0
   
-  //あるセルが空白だったらその行(Row)を非表示にする + 空白でなかったら再表示する
-  for(var i=3 ; i<=26 ; i++) { //A3 - A26を見る
-    range = sheet.getRange(i,1); //getRange([行(1,2,3,...)],[列(A,B,C,...)])
-    value = range.getValue()
-    //Browser.msgBox(value) //for Debug
-    if(value === "") {
-      sheet.hideRows(i)
+  value1 = sheet.getRange(7,1,26,1).getValues()
+  while(i<20) {
+    //Browser.msgBox("value1[" + i + "] = " + value1[i])
+    if(value1[i] == 0) {
+      sheet.hideRows(i+7,2)
     } else {
-      sheet.showRows(i)
+      sheet.showRows(i+7,2)
     }
+    i=i+2
   }
   
-  //あるセルが空白だったらその列(Column)を非表示にする + 空白でなかったら再表示する
-  for(var j=2 ; j<=11 ; j++) { //B2 - K2を見る
-    range = sheet.getRange(2,j);
-    value = range.getValue()
-    //Browser.msgBox(value) //for Debug
-    if(value === "") {
-      sheet.hideColumns(j)
+  value2 = sheet.getRange(4,3,1,10).getValues()
+  while(j<10) {
+    //Browser.msgBox("value2[0][" + j + "] = " + value2[0][j])
+    if(value2[0][j] == "") {
+      sheet.hideColumns(j+3)
     } else {
-      sheet.showColumns(j)
+      sheet.showColumns(j+3)
     }
+    j++
   }
 }
