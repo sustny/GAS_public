@@ -6,31 +6,72 @@
 // Referenced: http://qiita.com/tadaken3/items/5f916a12587e42ece814
 //
 
-var sheet = SpreadsheetApp.getActive().getSheetByName('入力');
-var token = "*** トークンID ***";
+var token = "*** トークンID ***"; //1対1グループ
+//var token = "*** トークンID ***"; //本番用グループ
 
-function sendLine(message){
+var sheet = SpreadsheetApp.getActive().getSheetByName('入力');
+var dat = sheet.getDataRange().getValues(); //[Row(行): 1,2,3,...][Column(列): 0,1,2,...]
+
+var today = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy/MM/dd');
+var yesterday = new Date();
+yesterday.setDate(yesterday.getDate() + 1);
+yesterday = Utilities.formatDate(yesterday, 'Asia/Tokyo', 'yyyy/MM/dd');
+
+function sendLine(message) {
   var options =
    {
      "method"  : "post",
      "payload" : "message=" + message,
      "headers" : {"Authorization" : "Bearer "+ token}
-
    };
 
    UrlFetchApp.fetch("https://notify-api.line.me/api/notify",options);
 }
 
-function getEventDate(){
-  var today = new Date();
-  today = Utilities.formatDate( today, 'Asia/Tokyo', 'yyyy/MM/dd');
-  var yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() + 1);
-  yesterday = Utilities.formatDate( yesterday, 'Asia/Tokyo', 'yyyy/MM/dd');
+function makeEventDate(row, day){
+  if(dat[row][5] != "") {
+    dat[row][5] = Utilities.formatDate(dat[row][5], 'Asia/Tokyo', 'H:mm');
+  }
+  var date = [dat[row][3], dat[row][4], dat[row][5], dat[row][6]] //イベント名, 場所, 集合時間, 集合場所
+  var name = ["", "開催場所", "集合時刻", "集合場所"]
   
-  var dat = sheet.getDataRange().getValues(); //[Row(行): 1,2,3,...][Column(列): 0,1,2,...]
+  var time
+  if(day == today) {
+    time = "本日"
+  } else if(day == yesterday) {
+    time = "明日"
+  }
+  
+  for(var i=0;i<4;i++) {
+    if(date[i]=="") {
+      date[i] = "("+ name[i] + "未定)"
+    }
+  }
+  var info;
+  info = ""+"\n■□" + time + "のイベント情報□■" + "\n【" + date[0] + "】\n" + date[1] + "\n\n【集合】\n" + date[2] + "\n" + date[3]
+  
+  //参加者一覧形成
+  var participant = ""
+  for(i=7;i<=15;i++) {
+    if(dat[row][i] == dat[1][17]) { //dat[1][17]...参加マーク("◯")格納セル
+      if(participant != "") {
+        participant = "" + participant + ", "
+      }
+      participant = "" + participant + dat[0][i] //dat[0][7~15]...参加者名
+    }
+  }
+  if(participant == "") {
+      participant = "\n\n【参加者】\n(未定)"
+    } else {
+      participant = "\n\n【参加者】\n" + participant
+    }
+  
+  sendLine(info+participant);
+}
+
+function LineNotifyMain(){
   //判定列(B)に1が入っている行を探す
-  //(1が入っているところが最初のイベントの行というクソスプレッドシートを書いてしまったが、そっちを直すのがめんどいのでこっちが合わせていく)
+  //(1が入っているところが直近で一番近いのイベントの行というクソスプレッドシートを書いてしまったが、そっちを直すのがめんどいのでこっちが合わせていく)
   for(var i=1;i<dat.length;i++){
     if(dat[i][1] === 1){
       var start = i; //start = dat[i][1]に1が入っていることが分かった
@@ -38,85 +79,16 @@ function getEventDate(){
     }
   }
   
-  //最初のイベント行が分かった所で、さっそくLINEに予定を書き込んでいこうや
-  var day, name, place, m_time, m_place, message; //日付, イベント名, 場所, 集合時間, 集合場所, LINEに送る文
-  
-  for(i=0;i<5;i++) {
+  var day, hour = new Date().getHours();
+  for(i=0;i<5;i++) { //i<5は直近5回分のイベントを見に行くよっていう数字
     if(dat[start+i][1] != "") {
-      day = Utilities.formatDate( dat[start+i][0], 'Asia/Tokyo', 'yyyy/MM/dd')
-      if(day == today) { //本日のイベント(当日9:00 - GASのトリガーで時間指定する)
-        name = dat[start+i][3]
-        
-        if(dat[start+i][4] == "") {
-          place = "(未定)"
-        } else {
-          place = dat[start+i][4]
-        }
-        
-        if(dat[start+i][5] == "") {
-          m_time = "(未定)"
-        } else {
-          m_time = dat[start+i][5]
-        }
-        
-        if(dat[start+i][6] == "") {
-          m_place = "(未定)"
-        } else {
-          m_place = dat[start+i][6]
-        }
-        
-        message = ""+"\n【本日のイベント情報】" + "\nイベント名: " + name + "\n場所: " + place + "\n\n集合時間: " + m_time + "\n集合場所: " + m_place 
-        sendLine(message);
-        
-        //参加者
-        message = ""
-        for(var j=7;j<17;j++) {
-          if(dat[start+i][j] == dat[1][17]) {
-            if(message != "") {
-              message = "" + message + ", "
-            }
-            message = "" + message + dat[0][j]
-          }
-        }
-        message = "\n【参加者】\n" + message
-        sendLine(message);
-        
-      } else if(day == yesterday) { //明日のイベント(前日18:00)
-        name = dat[start+i][3]
-        
-        if(dat[start+i][4] == "") {
-          place = "(未定)"
-        } else {
-          place = dat[start+i][4]
-        }
-        
-        if(dat[start+i][5] == "") {
-          m_time = "(未定)"
-        } else {
-          m_time = dat[start+i][5]
-        }
-        
-        if(dat[start+i][6] == "") {
-          m_place = "(未定)"
-        } else {
-          m_place = dat[start+i][6]
-        }
-        
-        message = ""+"\n【明日のイベント情報】" + "\nイベント名: " + name + "\n場所: " + place + "\n\n集合時間: " + m_time + "\n集合場所: " + m_place 
-        sendLine(message);
-        
-        //参加者
-        message = ""
-        for(var j=7;j<17;j++) {
-          if(dat[start+i][j] == dat[1][17]) {
-            if(message != "") {
-              message = "" + message + ", "
-            }
-            message = "" + message + dat[0][j]
-          }
-        }
-        message = "\n【参加者】\n" + message
-        sendLine(message);
+      day = Utilities.formatDate(dat[start+i][0], 'Asia/Tokyo', 'yyyy/MM/dd')
+      
+      //12時以前なら当日の予定だけ、12時以降なら明日の予定だけ -> AMとPMそれぞれでGASのトリガーを登録すればうまいこといくやろ（適当）
+      if((day == today)  && (hour < 12)) {
+        makeEventDate(start+i, today)
+      } else if((day == yesterday) && (hour > 12)) {
+        makeEventDate(start+i, yesterday)
       }
     }
   }
