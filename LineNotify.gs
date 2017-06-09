@@ -67,6 +67,20 @@ function getEventDate(){
         
         message = ""+"\n【本日のイベント情報】" + "\nイベント名: " + name + "\n場所: " + place + "\n\n集合時間: " + m_time + "\n集合場所: " + m_place 
         sendLine(message);
+        
+        //参加者
+        message = ""
+        for(var j=7;j<17;j++) {
+          if(dat[start+i][j] == dat[1][17]) {
+            if(message != "") {
+              message = "" + message + ", "
+            }
+            message = "" + message + dat[0][j]
+          }
+        }
+        message = "\n【参加者】\n" + message
+        sendLine(message);
+        
       } else if(day == yesterday) { //明日のイベント(前日18:00)
         name = dat[start+i][3]
         
@@ -89,6 +103,19 @@ function getEventDate(){
         }
         
         message = ""+"\n【明日のイベント情報】" + "\nイベント名: " + name + "\n場所: " + place + "\n\n集合時間: " + m_time + "\n集合場所: " + m_place 
+        sendLine(message);
+        
+        //参加者
+        message = ""
+        for(var j=7;j<17;j++) {
+          if(dat[start+i][j] == dat[1][17]) {
+            if(message != "") {
+              message = "" + message + ", "
+            }
+            message = "" + message + dat[0][j]
+          }
+        }
+        message = "\n【参加者】\n" + message
         sendLine(message);
       }
     }
