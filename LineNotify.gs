@@ -11,24 +11,21 @@ var token = "***トークンID***"; //1対1グループ
 //var token = "***トークンID***"; //本番用グループ
 
 var sheet = SpreadsheetApp.getActive().getSheetByName('入力');
-var dat = sheet.getDataRange().getValues(); //[Row(行): 1,2,3,...][Column(列): 0,1,2,...]
-var count = 7; //見に行くイベントの数
+var dat = sheet.getDataRange().getValues();
+var count = 5; //見に行くイベントの数
+var before = 3; //今日明日以外で通知するイベントの通知日(="before"日前に告知する)
 
-/* ------------------------------ Check Date ------------------------------ */
-//現在の日付、曜日、時刻
-var now_day = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy/MM/dd');
-var now_week = new Date().getDay();
-var now_hour = new Date().getHours();
-
+/* ------------------------------ Get Date ------------------------------ */
+//現在の日付
+var today = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy/MM/dd');
 //翌日の日付
-var next_day = new Date();
-next_day.setDate(next_day.getDate() + 1);
-next_day = Utilities.formatDate(next_day, 'Asia/Tokyo', 'yyyy/MM/dd');
-
-//翌週の日付
-var next_week = new Date();
-next_week.setDate(next_week.getDate() + 7);
-next_week = Utilities.formatDate(next_week, 'Asia/Tokyo', 'yyyy/MM/dd');
+var tomorrow = new Date();
+tomorrow.setDate(tomorrow.getDate() + 1);
+tomorrow = Utilities.formatDate(tomorrow, 'Asia/Tokyo', 'yyyy/MM/dd');
+//before日後の日付(↑Settingsで指定)
+var next = new Date();
+next.setDate(next.getDate() + before);
+next = Utilities.formatDate(next, 'Asia/Tokyo', 'yyyy/MM/dd');
 
 /* ------------------------------ Memo ------------------------------ */
 //dat[i][1-4]...日時
@@ -45,49 +42,6 @@ function sendLine(message) {
     };
   UrlFetchApp.fetch("https://notify-api.line.me/api/notify",options);
 }
-
-/*
-function makeEventDate(row, day){
-  if(dat[row][5] != "") {
-    dat[row][5] = Utilities.formatDate(dat[row][5], 'Asia/Tokyo', 'H:mm');
-  }
-  var date = [dat[row][3], dat[row][4], dat[row][5], dat[row][6]] //イベント名, 場所, 集合時間, 集合場所
-  var name = ["", "開催場所", "集合時刻", "集合場所"]
-  
-  var time
-  if(day == today) {
-    time = "本日"
-  } else if(day == yesterday) {
-    time = "明日"
-  }
-  
-  for(var i=0;i<4;i++) {
-    if(date[i]=="") {
-      date[i] = "("+ name[i] + "未定)"
-    }
-  }
-  var info;
-  info = ""+"\n■□" + time + "のイベント情報□■" + "\n【" + date[0] + "】\n" + date[1] + "\n\n【集合】\n" + date[2] + "\n" + date[3]
-  
-  //参加者一覧形成
-  var participant = ""
-  for(i=7;i<=15;i++) {
-    if(dat[row][i] == dat[1][17]) { //dat[1][17]...参加マーク("◯")格納セル
-      if(participant != "") {
-        participant = "" + participant + "、"
-      }
-      participant = "" + participant + dat[0][i] //dat[0][7~15]...参加者名
-    }
-  }
-  if(participant == "") {
-      participant = "\n\n【参加者】\n(未定)"
-    } else {
-      participant = "\n\n【参加者】\n" + participant
-    }
-  
-  sendLine(info+participant);
-}
-*/
 
 function searchNearestEvent(near) {
   ////判定列(A)に1が入っている行を探す
@@ -108,12 +62,12 @@ function makeMessage(row, date) {
   
   var message = "\n■□";
   
-  if(date==now_day) {
+  if(date==today) {
     message = message + "本日";
-  } else if(date==next_day) {
+  } else if(date==tomorrow) {
     message = message + "明日";
   } else {
-    message = message + "来週";
+    message = message + before + "日後";
   }
   message += "のイベント情報□■"
   
@@ -121,30 +75,44 @@ function makeMessage(row, date) {
   
   message += "\n" + Utilities.formatDate(dat[row][1], 'Asia/Tokyo', 'M/d');
   
-  if(dat[row][2] == "") { //開始日付以外未定
+  if(dat[row][2] == "") { //開始日付◯ / 開始時刻× / 終了日付× / 終了時刻×
     message += " (開始時刻未定)"
-  } else if(dat[row][3] == "") { //終了未定
-    message += " " + Utilities.formatDate(dat[row][2], 'Asia/Tokyo', 'H:mm');
+  } else {
+    message += " " + Utilities.formatDate(dat[row][2], 'Asia/Tokyo', 'H:mm') + " 〜";
+    
+    if(dat[row][3] != "") {
+      message += " " + Utilities.formatDate(dat[row][3], 'Asia/Tokyo', 'M/d');
+    }
+    
+    if(dat[row][4] != "") {
+      message += " " + Utilities.formatDate(dat[row][4], 'Asia/Tokyo', 'H:mm');
+    }
   }
   
   if(dat[row][6 == ""]) {
     message += "\n(会場未定)";
   } else {
-    message += "\n" + dat[row][6];
+    message += "\n会場: " + dat[row][6];
   }
   
-  //以下、今日明日のみ(来週の予定では使わない)
-  if(date == next_week) {
-    sendLine(message); //送って終わり〜〜
+  //以下、今日明日のみ(before日後の予定では使わない)
+  if(date == next) {
+    sendLine(message); //送って終わり
   } else {
     message += "\n\n◇集合"
+    
+    //集合時刻と集合場所は、どっちも書いてある時のみ記載・どっちか抜けてれば未定とする
+    //かつ位置情報は時刻と場所が埋まっていて、位置情報も埋まっていれば記載する
     if( (dat[row][7] != "" ) && (dat[row][8] != "") ) {
       message += "\n" + Utilities.formatDate(dat[row][7], 'Asia/Tokyo', 'H:mm'); //集合時刻
       message += " " + dat[row][8]; //集合場所
-      message += "\n" + "https://www.google.co.jp/maps/place/" + dat[row][9]; //位置情報
+      if(dat[row][9] != "") {
+        message += "\n" + "https://www.google.co.jp/maps/place/" + dat[row][9]; //位置情報
+      }
     } else {
       message += "\n(集合時刻・場所未定)";
     }
+    
     message += "\n\n◇参加者"
       var participant = "";
       for(var i=10;i<=19;i++) {
@@ -164,20 +132,29 @@ function Main() {
   //[1]現在時刻から最も近いイベントが記入されている行を探す
   var near = searchNearestEvent(near);
   
-  //[2]午前中のイベントは前日夜、午後のイベントは当日朝、加えて1週間前に全てのイベントを告知する
+  //[2]午前中のイベントは前日夜、午後のイベントは当日朝、1週間前のイベントを1週間前の夜に告知する
+  
+  //[2-1]開催日が当日かつ開始時刻がPMの場合、当日朝にリマインド(AM8-9時にプログラム実行をスケジューリング)
+  //[2-2]開催日が翌日かつ開始時刻がAMの場合、前日夜にリマインド(PM8-9時にプログラム実行をスケジューリング)
+  //[2-3]開催日がbefore日後なら、before日前の夜にリマインド(PM8-9時スケ)
   for(var i=0;i<count;i++) {
-    if(dat[near+i][2] != "") {
+    if(dat[near+i][1] != "") {
       var day = Utilities.formatDate(dat[near+i][1], 'Asia/Tokyo', 'yyyy/MM/dd'); //取得した行に格納された開始日付
       var hour = dat[near+i][2].getHours(); //取得した行に格納された開始時刻
-      if( (day == now_day) && (hour >= 12) && (now_hour < 12) ) { //1-1. 今日の予定(投稿スケジュール: AM8-9時)
-        makeMessage(near+i, now_day);
-      } else if( (day == next_day) && (hour < 12) && (now_hour >= 12) ) { //1-2. 明日の予定(投稿スケジュール: PM8-9時)
-        makeMessage(near+i, next_day);
-      } else if( (day < next_week) && (now_week == 1) ) { //2. 次回の予定(投稿スケジュール: PM8-9時)
-        makeMessage(near+i, next_week);
+      
+      if(hour < 12) {
+        if(day == today) {
+          makeMessage(near+i, today); //[2-1]
+        }
+      } else {
+        if(day == tomorrow) {
+          makeMessage(near+i, tomorrow); //[2-2]
+        } else if(day == next) {
+          makeMessage(near+i, next); //[2-3]
+        }
       }
     } else {
-      i = count; //強制終了
+      i = count; //dat[near+i][2] == ""になったら強制終了
     }
   }
 }
