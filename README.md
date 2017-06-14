@@ -7,7 +7,7 @@ JavaScript互換かつGoogle系のサービスと相性がいいみたいなの�
 
 また、このリポジトリにあるスクリプトはGoogleスプレッドシートと対応しています。
 
-## hidden.gs
+## Hidden.gs
 あるセルが空白なら、その列をまるごと隠すスクリプト。
 
 ## LineNotify.gs
