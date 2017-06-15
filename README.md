@@ -29,3 +29,9 @@ JavaScript互換かつGoogle系のサービスと相性がいいみたいなの�
 
 ## 補足
 スプレッドシートは個人情報を削除した上でそのうち公開すると思います。
+
+## ライセンス(License)
+
+各スクリプトは、MITライセンスのもとに公開いたします。LICENSE.txt を参照してください。
+
+(This software is released under the MIT License, see LICENSE.txt.)
