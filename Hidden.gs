@@ -1,27 +1,20 @@
 //
 // Hidden.gs
-// Created on 2017-06-14 15:20
+// Created on 2017-06-04 17:00
 // Created by sustny
 //
 
-/* ------------------------------ Settings ------------------------------ */
-var sheet = SpreadsheetApp.getActive().getSheetByName('集計');
-var dat = sheet.getDataRange().getValues();
-
 function hidden() {
-  //参加者
-  sheet.showRows(7, 10);
-  for(var i=6;i<16;i++) {
-    if(dat[i][1] == "") {
-      sheet.hideRows(i+1);
-    }
-  }
-  
-  //イベント
-  sheet.showColumns(3, 5)
-  for(i=2;i<7;i++) {
-    if(dat[2][i] == "") {
-      sheet.hideColumns(i+1);
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet1 = ss.getSheetByName("集計");
+  var dat1 = sheet1.getDataRange().getValues();
+
+  for(var i=2 ; i<=6 ; i++) {
+    Logger.log(dat1[2][i]);
+    if(dat1[2][i] == "") {
+      sheet1.hideColumns(i+1);
+    } else {
+      sheet1.showColumns(i+1);
     }
   }
 }

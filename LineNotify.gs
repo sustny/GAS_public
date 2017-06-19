@@ -1,39 +1,27 @@
 //
 // LineNotify.gs
-// Created on 2017-06-11 01:30
+// Created on 2017-06-09 00:40
 // Created by sustny
 //
 // Referenced: http://qiita.com/tadaken3/items/5f916a12587e42ece814
 //
 
-/* ------------------------------ Settings ------------------------------ */
-var token = "***トークンID***"; //1対1グループ
-//var token = "***トークンID***"; //本番用グループ
-
+/* ------------------------------ Token List ------------------------------ */
+//var token = "***トークンID***"; //1対1グループ
+var token = "***トークンID***"; //本番用グループ
+/* ------------------------------ Spreadsheet Loading ------------------------------ */
 var sheet = SpreadsheetApp.getActive().getSheetByName('入力');
-var dat = sheet.getDataRange().getValues();
-var count = 5; //見に行くイベントの数
-var before = 3; //今日明日以外で通知するイベントの通知日(="before"日前に告知する)
-
-/* ------------------------------ Get Date ------------------------------ */
-//現在の日付
+var dat = sheet.getDataRange().getValues(); //[Row(行): 1,2,3,...][Column(列): 0,1,2,...]
+/* ------------------------------ Check Date ------------------------------ */
 var today = Utilities.formatDate(new Date(), 'Asia/Tokyo', 'yyyy/MM/dd');
-//翌日の日付
-var tomorrow = new Date();
-tomorrow.setDate(tomorrow.getDate() + 1);
-tomorrow = Utilities.formatDate(tomorrow, 'Asia/Tokyo', 'yyyy/MM/dd');
-//before日後の日付(↑Settingsで指定)
-var next = new Date();
-next.setDate(next.getDate() + before);
-next = Utilities.formatDate(next, 'Asia/Tokyo', 'yyyy/MM/dd');
-
-/* ------------------------------ Memo ------------------------------ */
-//dat[i][1-4]...日時
-//dat[i][5,6]...イベント名、会場
-//dat[i][7-9]...集合時間、集合場所、座標
-//dat[i][10-19]...メンバー
+var yesterday = new Date();
+yesterday.setDate(yesterday.getDate() + 1);
+yesterday = Utilities.formatDate(yesterday, 'Asia/Tokyo', 'yyyy/MM/dd');
+/* ------------------------------ Settings ------------------------------ */
+var count = 5; //見に行くイベントの数(今日明日だけだし2でも大丈夫かも)
 
 function sendLine(message) {
+  Logger.log("Notify start!")
   var options =
     {
       "method"  : "post",
@@ -41,120 +29,76 @@ function sendLine(message) {
       "headers" : {"Authorization" : "Bearer "+ token}
     };
   UrlFetchApp.fetch("https://notify-api.line.me/api/notify",options);
+  Logger.log("Notify end!")
 }
 
-function searchNearestEvent(near) {
-  ////判定列(A)に1が入っている行を探す
-  for(var i=2;i<dat.length;i++){
-    if(dat[i][0] === 1) {
-      var near = i; //start = dat[i][0]に1が入っていることが分かった
-      i = dat.length; //for文強制終了
+function makeEventDate(row, day){
+  if(dat[row][5] != "") {
+    dat[row][5] = Utilities.formatDate(dat[row][5], 'Asia/Tokyo', 'H:mm');
+  }
+  var date = [dat[row][3], dat[row][4], dat[row][5], dat[row][6]] //イベント名, 場所, 集合時間, 集合場所
+  var name = ["", "開催場所", "集合時刻", "集合場所"]
+  
+  var time
+  if(day == today) {
+    time = "本日"
+  } else if(day == yesterday) {
+    time = "明日"
+  }
+  
+  for(var i=0;i<4;i++) {
+    if(date[i]=="") {
+      date[i] = "("+ name[i] + "未定)"
     }
   }
-  return near;
-}
-
-function makeMessage(row, date) {
-  //dat[i][1-4]...日時
-  //dat[i][5,6]...イベント名、会場
-  //dat[i][7-9]...集合時間、集合場所、座標
-  //dat[i][10-19]...メンバー
+  var info;
+  info = ""+"\n■□" + time + "のイベント情報□■" + "\n【" + date[0] + "】\n" + date[1] + "\n\n【集合】\n" + date[2] + "\n" + date[3]
   
-  var message = "\n■□";
-  
-  if(date==today) {
-    message = message + "本日";
-  } else if(date==tomorrow) {
-    message = message + "明日";
-  } else {
-    message = message + before + "日後";
-  }
-  message += "のイベント情報□■"
-  
-  message += "\n◆" + dat[row][5];
-  
-  message += "\n" + Utilities.formatDate(dat[row][1], 'Asia/Tokyo', 'M/d');
-  
-  if(dat[row][2] == "") { //開始日付◯ / 開始時刻× / 終了日付× / 終了時刻×
-    message += " (開始時刻未定)"
-  } else {
-    message += " " + Utilities.formatDate(dat[row][2], 'Asia/Tokyo', 'H:mm') + " 〜";
-    
-    if(dat[row][3] != "") {
-      message += " " + Utilities.formatDate(dat[row][3], 'Asia/Tokyo', 'M/d');
-    }
-    
-    if(dat[row][4] != "") {
-      message += " " + Utilities.formatDate(dat[row][4], 'Asia/Tokyo', 'H:mm');
-    }
-  }
-  
-  if(dat[row][6 == ""]) {
-    message += "\n(会場未定)";
-  } else {
-    message += "\n会場: " + dat[row][6];
-  }
-  
-  //以下、今日明日のみ(before日後の予定では使わない)
-  if(date == next) {
-    sendLine(message); //送って終わり
-  } else {
-    message += "\n\n◇集合"
-    
-    //集合時刻と集合場所は、どっちも書いてある時のみ記載・どっちか抜けてれば未定とする
-    //かつ位置情報は時刻と場所が埋まっていて、位置情報も埋まっていれば記載する
-    if( (dat[row][7] != "" ) && (dat[row][8] != "") ) {
-      message += "\n" + Utilities.formatDate(dat[row][7], 'Asia/Tokyo', 'H:mm'); //集合時刻
-      message += " " + dat[row][8]; //集合場所
-      if(dat[row][9] != "") {
-        message += "\n" + "https://www.google.co.jp/maps/place/" + dat[row][9]; //位置情報
+  //参加者一覧形成
+  var participant = ""
+  for(i=7;i<=15;i++) {
+    if(dat[row][i] == dat[1][17]) { //dat[1][17]...参加マーク("◯")格納セル
+      if(participant != "") {
+        participant = "" + participant + "、"
       }
+      participant = "" + participant + dat[0][i] //dat[0][7~15]...参加者名
+    }
+  }
+  if(participant == "") {
+      participant = "\n\n【参加者】\n(未定)"
     } else {
-      message += "\n(集合時刻・場所未定)";
+      participant = "\n\n【参加者】\n" + participant
     }
-    
-    message += "\n\n◇参加者"
-      var participant = "";
-      for(var i=10;i<=19;i++) {
-        if(dat[row][i] == "◯") {
-          if(participant != "") {
-            participant += "、"
-          }
-          participant += dat[1][i];
-        }
-      }
-      message += "\n" + participant;
-    sendLine(message);
-  }
+  
+  sendLine(info+participant);
 }
 
-function Main() {
-  //[1]現在時刻から最も近いイベントが記入されている行を探す
-  var near = searchNearestEvent(near);
+function LineNotifyMain(){
+  //判定列(B)に1が入っている行を探す
+  //(1が入っているところが直近で一番近いのイベントの行というクソスプレッドシートを書いてしまったが、そっちを直すのがめんどいのでこっちが合わせていく)
+  for(var i=1;i<dat.length;i++){
+    if(dat[i][1] === 1){
+      var start = i; //start = dat[i][1]に1が入っていることが分かった
+      i = dat.length; //forが終わる条件にして強制終了
+    }
+  }
   
-  //[2]午前中のイベントは前日夜、午後のイベントは当日朝、1週間前のイベントを1週間前の夜に告知する
-  
-  //[2-1]開催日が当日かつ開始時刻がPMの場合、当日朝にリマインド(AM8-9時にプログラム実行をスケジューリング)
-  //[2-2]開催日が翌日かつ開始時刻がAMの場合、前日夜にリマインド(PM8-9時にプログラム実行をスケジューリング)
-  //[2-3]開催日がbefore日後なら、before日前の夜にリマインド(PM8-9時スケ)
-  for(var i=0;i<count;i++) {
-    if(dat[near+i][1] != "") {
-      var day = Utilities.formatDate(dat[near+i][1], 'Asia/Tokyo', 'yyyy/MM/dd'); //取得した行に格納された開始日付
-      var hour = dat[near+i][2].getHours(); //取得した行に格納された開始時刻
+  var day, hour = new Date().getHours();
+  for(i=0;i<count;i++) { //i<5は直近5回分のイベントを見に行くよっていう数字
+    Logger.log("Event Count: i = " + i)
+    if(dat[start+i][1] != "") {
+      day = Utilities.formatDate(dat[start+i][0], 'Asia/Tokyo', 'yyyy/MM/dd')
       
-      if(hour < 12) {
-        if(day == today) {
-          makeMessage(near+i, today); //[2-1]
-        }
-      } else {
-        if(day == tomorrow) {
-          makeMessage(near+i, tomorrow); //[2-2]
-        } else if(day == next) {
-          makeMessage(near+i, next); //[2-3]
-        }
+      //12時以前なら当日の予定だけ、12時以降なら明日の予定だけ -> AMとPMそれぞれでGASのトリガーを登録すればうまいこといくやろ（適当）
+      if((day == today)  && (hour < 12)) {
+        Logger.log("Today start!")
+        makeEventDate(start+i, today)
+        Logger.log("Today end!")
+      } else if((day == yesterday) && (hour > 12)) {
+        Logger.log("Yesterday start!")
+        makeEventDate(start+i, yesterday)
+        Logger.log("Yesterday end!")
       }
-    } else {
-      i = count; //dat[near+i][2] == ""になったら強制終了
     }
   }
 }
