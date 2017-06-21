@@ -18,6 +18,8 @@ JavaScript互換かつGoogle系のサービスと相性がいいみたいなの�
 ## FishingInfo.gs
 場所(URL参照)と日付を指定して実行すると、潮位やこよみの情報を表示します。
 
+場所はこちらから→https://drive.google.com/open?id=1QhhCBEdewuM-V39pam51TNJ-rZY&usp=sharing
+
 ### 仕様まとめ
 
 1. シートから直近のイベントが記入されている行を探す
