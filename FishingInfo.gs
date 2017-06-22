@@ -43,7 +43,7 @@ function FishingInfo(p, y, m, d) {
 }
 
 function Main() {
-  var place = 89; //ex: 96-晴海 / 89-立山 / 116-江の島
+  var place = 89; //ex: 96-晴海 / 89-館山 / 116-江の島
   var year = 2017;
   var month = 07;
   var day = 07;
