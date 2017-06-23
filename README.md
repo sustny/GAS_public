@@ -7,18 +7,17 @@ JavaScript互換かつGoogle系のサービスと相性がいいみたいなの�
 
 また、このリポジトリにあるスクリプトはGoogleスプレッドシートと対応しています。
 
+-----
+
 ## Hidden.gs
 ある(行|列)のセルが空白なら、その(行|列)ごと隠すスクリプト。
+
+-----
 
 ## LineNotify.gs
 直近のイベント情報をLINEに送信するスクリプト。
 
 (17/06/20)FishingInfo.gsの関数をそのままコピペして、イベントが釣りだった場合に該当地域の潮位情報も通知するようにしました。
-
-## FishingInfo.gs
-場所(URL参照)と日付を指定して実行すると、潮位やこよみの情報を表示します。
-
-場所はこちらから→https://drive.google.com/open?id=1QhhCBEdewuM-V39pam51TNJ-rZY&usp=sharing
 
 ### 仕様まとめ
 
@@ -30,8 +29,24 @@ JavaScript互換かつGoogle系のサービスと相性がいいみたいなの�
 
 ※count, laterはソースコード上部のSettingsで宣言している
 
-## 補足
+### 補足
 スプレッドシートは個人情報を削除した上でそのうち公開すると思います。
+
+-----
+
+## FishingInfo.gs
+場所(URL参照)と日付を指定して実行すると、潮位やこよみの情報を表示します。
+
+場所はこちらから→https://drive.google.com/open?id=1QhhCBEdewuM-V39pam51TNJ-rZY&usp=sharing
+
+-----
+
+## TideInfo.gs
+気象庁が公開している潮位予測データを元に、場所と日付を指定して実行すると潮位情報を返すプログラムです。
+
+FishingInfo.gsで使っていたfishstar(http://fishing-community.appspot.com/tidexml/doc)のAPIを使わないバージョンです。
+
+今後より長くサービスの公開が続きそうなのはどちらか考えた時、選ばれたのは気象庁でした。
 
 -----
 
