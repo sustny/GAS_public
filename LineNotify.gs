@@ -154,55 +154,35 @@ function LineNotifyMain(){
     Logger.log("Row in nearly event is Nothing");
   } else {
     Logger.log("----- Start to notification. -----");
-    var day, hour;
     for(i=0;i<count;i++) { //直近count回分のイベントを見に行く(ただしイベント情報がなくなった時点でelseでiにcountを代入し終了する)
       Logger.log("----- Count = " + i + " -----");
       if( (dat[start+i][1] != "") && (dat[start+i][2] != "") ) {
-        day = Utilities.formatDate(dat[start+i][1], 'Asia/Tokyo', 'yyyy/MM/dd');
-        hour = Utilities.formatDate(dat[start+i][2], 'Asia/Tokyo', 'H');
+        var day = Utilities.formatDate(dat[start+i][1], 'Asia/Tokyo', 'yyyy/MM/dd');
+        var FishY = Utilities.formatDate(dat[start+i][1], 'Asia/Tokyo', 'yyyy');
+        var FishM = Utilities.formatDate(dat[start+i][1], 'Asia/Tokyo', 'MM');
+        var FishD =Utilities.formatDate(dat[start+i][1], 'Asia/Tokyo', 'dd');
         
-        //12時以前なら当日の予定だけ、12時以降なら明日の予定だけ通知を実行
-        if(day == today) {
-          Logger.log("+ Checking Event at PM");
-          if(hour >= 12) {
-            Logger.log("++ Today start!");
-            makeEventDate(start+i, today);
-            if(dat[start+i][17] != "" ) {
-              Logger.log("++ FishingInfo start!");
-              FishingInfo(dat[start+i][17], Utilities.formatDate(dat[start+i][1], 'Asia/Tokyo', 'yyyy'), Utilities.formatDate(dat[start+i][1], 'Asia/Tokyo', 'MM'), Utilities.formatDate(dat[start+i][1], 'Asia/Tokyo', 'dd'));
-              Logger.log("++ FishingInfo end!");
-            }
-            Logger.log("++ Today end!");
-          } else {
-            Logger.log("Excluded...");
+        //紆余曲折あったけど、明日の予定と1週間後の予定だけを夜に通知するようにした
+        if(day == yesterday) {
+          Logger.log("++ Yesterday start!");
+          makeEventDate(start+i, yesterday);
+          if(dat[start+i][17] != "" ) {
+            Logger.log("+ FishingInfo start!");
+            FishingInfo(dat[start+i][17], FishY, FishM, FishD);
+            Logger.log("+ FishingInfo end!");
           }
-        } else if(day == yesterday) {
-          Logger.log("+ Checking Event at AM");
-          if(hour < 12) {
-            Logger.log("++ Yesterday start!");
-            makeEventDate(start+i, yesterday);
-            if(dat[start+i][17] != "" ) {
-              Logger.log("++ FishingInfo start!");
-              FishingInfo(dat[start+i][17], Utilities.formatDate(dat[start+i][1], 'Asia/Tokyo', 'yyyy'), Utilities.formatDate(dat[start+i][1], 'Asia/Tokyo', 'MM'), Utilities.formatDate(dat[start+i][1], 'Asia/Tokyo', 'dd'));
-              Logger.log("++ FishingInfo end!");
-            }
-            Logger.log("++ Yesterday end!");
-          } else {
-            Logger.log("Through...");
-          }
+          Logger.log("++ Yesterday end!");
+          
         } else if(day == later) {
-          if(time >= 12) { //1週間後の予定について、現在時刻が12時以降の時だけ通知を実行
-            Logger.log("++ A few days later start!");
-            makeEventDate(start+i, later);
-            if(dat[start+i][17] != "" ) {
-              Logger.log("++ FishingInfo start!");
-              FishingInfo(dat[start+i][17], Utilities.formatDate(dat[start+i][1], 'Asia/Tokyo', 'yyyy'), Utilities.formatDate(dat[start+i][1], 'Asia/Tokyo', 'MM'), Utilities.formatDate(dat[start+i][1], 'Asia/Tokyo', 'dd'));
-              Logger.log("++ FishingInfo end!");
-            }
-            Logger.log("++ A few days later end!");
-          } else {
-            Logger.log("Through...");
+          Logger.log("++ A few days later start!");
+          makeEventDate(start+i, later);
+          if(dat[start+i][17] != "" ) {
+            Logger.log("+ FishingInfo start!");
+            FishingInfo(dat[start+i][17], FishY, FishM, FishD);
+            Logger.log("+ FishingInfo end!");
           }
+          Logger.log("++ A few days later end!");
+          
         } else {
           Logger.log("Excluded...");
         }
@@ -218,4 +198,15 @@ function LineNotifyMain(){
   var program_end = new Date(); //処理時間計測用
   var program_sec = (program_end-program_start)/1000; //処理時間計測用
   Logger.log("処理時間: " + program_sec + "秒");
+  
+  /* そのうち形を変えて使う(多分)
+  for(i=0;i<15;i++) {
+    var j = i+1;
+    //Logger.log("セルD" + j + " = " + dat[i][3]);
+    if(dat[i][3].match(/釣り/)) {
+      Logger.log("セルD" + j + " is 釣りの日");
+    } else {
+      Logger.log("セルD" + j + " is not 釣りの日");
+    }
+  }*/
 }
