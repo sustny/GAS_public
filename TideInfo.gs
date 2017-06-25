@@ -93,18 +93,23 @@ function getText(p, y, m, d) {
   return data;
 }
 
-function TextConvert(txt) {
-  //getTextでゲットした生データを加工する関数
-  
-  //さっきまで実装してたやつ 後で使う
-  var Max = [txt.substr(80,4),txt.substr(84,3)];
-  Logger.log('時刻: ' + parseInt(Max[0]) + ' 潮位: ' + parseInt(Max[1]));
+function TextConvert(txt) { //getTextでゲットした生データを加工する関数
+  var data = ['' + parseInt(txt.substr(80,2)) + ':' + parseInt(txt.substr(82,2)), parseInt(txt.substr(84,3)),
+              '' + parseInt(txt.substr(87,2)) + ':' + parseInt(txt.substr(89,2)), parseInt(txt.substr(91,3)),
+              '' + parseInt(txt.substr(94,2)) + ':' + parseInt(txt.substr(96,2)), parseInt(txt.substr(98,3)),
+              '' + parseInt(txt.substr(101,2)) + ':' + parseInt(txt.substr(103,2)), parseInt(txt.substr(105,3)),
+              '' + parseInt(txt.substr(108,2)) + ':' + parseInt(txt.substr(110,2)), parseInt(txt.substr(112,3)),
+              '' + parseInt(txt.substr(115,2)) + ':' + parseInt(txt.substr(117,2)), parseInt(txt.substr(119,3)),
+              '' + parseInt(txt.substr(122,2)) + ':' + parseInt(txt.substr(124,2)), parseInt(txt.substr(126,3)),
+              '' + parseInt(txt.substr(129,2)) + ':' + parseInt(txt.substr(131,2)), parseInt(txt.substr(133,3))];
+  return data;
 }
 
 function Main() {
   /* --------------------------------- 決める数値 ここから --------------------------------- */
   //まず行く場所を決めます(DEGで指定 釣りをやる場所)
-  var NOW = ['35.63', '140.07'];
+  //var NOW = ['35.63', '140.07'];
+  var NOW = ['35.75', '139.77'];
   //次に日付を指定します(yyyy/m/d);
   var YEAR = 2017;
   var MONTH = 7;
@@ -118,13 +123,22 @@ function Main() {
   
   //指定した日付でデータを収集します
   var Row = getText(PORT[0], YEAR, MONTH, DAY); //指定日付の潮位データ行まるごと
-  Logger.log(Row);
   //収集したデータを加工します
-  var Info = TextConvert(Row);
+  var Info = TextConvert(Row); //Info[i] -> 満潮時刻、満潮潮位の順に格納。i=0-7が満潮、i=8-15が干潮、データなしの場合99:99/999を格納
+  for(var i=0;i<16;i+=2) {
+    if(Info[i+1] != 999) {
+      if(i<8) {
+        Logger.log('満潮 - 時刻: ' + Info[i] + ' 潮位: ' + Info[i+1] + 'cm');
+      } else {
+        Logger.log('干潮 - 時刻: ' + Info[i] + ' 潮位: ' + Info[i+1] + 'cm');
+      }
+    }
+  }
   
   //GoogleMapのURLを生成します
   var toGoURL = 'https://www.google.com/maps/place/' + NOW[0] + ',' + NOW[1]; //行先の地図
   var TideURL = 'https://www.google.com/maps/place/' + PORT[2] + ',' + PORT[3]; //行先から最も近い潮位データの観測地点
-  Logger.log('\n' + toGoURL + '\n' + TideURL);
+  Logger.log(toGoURL);
+  Logger.log(TideURL);
   /* --------------------------- 自動的にあれこれやるエリア ここまで --------------------------- */
 }
