@@ -1,7 +1,8 @@
 //
-// Test_TextConvert.gs
+// TideInfo.gs
 // Created on 2017-06-23 13:30
-// Created by sustny
+// Created by sustny(http://sustny.me/)
+// Data provided by Japan Meteorological Agency(http://www.jma.go.jp/jma/)
 //
 /*
 http://www.data.jma.go.jp/kaiyou/db/tide/suisan/readme.html
@@ -20,36 +21,62 @@ http://www.data.jma.go.jp/kaiyou/db/tide/suisan/readme.html
 //干潮(時刻,潮位): 108-111,112-114 / 115-118,119-121 / 122-125,126-128 / 129-132,133-135;
 // ------------------------------ データ構造分解図 ------------------------------
 
-function DMStoDEGjp(n,e) {
+function DMStoDEGjp(n,e) { //気象庁が公開している位置情報特有の文字列だから変換できる超オレオレ関数
   var north = parseInt(n.substr(0,2)) + parseFloat(n.substr(3,2)/60);
   var east = parseInt(e.substr(0,3)) + parseFloat(e.substr(4,2)/60);
-  var degree = '' + north + ',' + east;
-  return degree;
+  return [north, east];
 }
 
-function TextConvert() {
-  //getTextでゲットした生データを加工する関数
-  
-  /* さっきまで実装してたやつ 後で使う
-  var test = TXT.substr((137*0)+0,3);
-  Logger.log(test);
-  test = parseInt(test);
-  Logger.log('' + test);
-  */
-}
-
-function getText(n, y, m, d) {
-  //https://www.google.com/maps/place/35°39'+139°46'
-  //http://www.data.jma.go.jp/kaiyou/db/tide/suisan/station.php <- xmlで解釈不可能なのでやむをえずPDICT(P:PORT), NDICT(N:NAME)に自力で書き出してる
-  //53-76まで入れとこう
-  var PDICT = ['CS', 'ZF', 'MR', 'TT', 'KZ', 'QL', 'CB', 'TK', 'KW', 'YK', 'QS', 'HM', 'QN', 'Z1', 'OK', 'QO', 'MJ', 'QP', 'D4', 'QQ', 'CC', 'MC', 'D8', 'OD']; //変数PORTに入力可能な記号を一覧化したもの
-  var NDICT = ['銚子漁港', '勝浦', '布良', '館山', '木更津', '千葉', '千葉港', '東京', '川崎', '京浜港', '横浜', '本牧', '横須賀', '油壺', '岡田', '神津島', '三宅島（坪田）', '三宅島（阿古）', '八丈島（八重根）', '八丈島（神湊）', '父島', '南鳥島', '湘南港', '小田原']; //PDICT内の記号に対応する名前を一覧化したもの
+function searchNearPort(n,e) {
+  //https://www.google.com/maps/place/35°39'+139°46' <- 地図URLフォーマット。実装したからこのコメントごといつでも消していい(心配症なので残してる)
+  //http://www.data.jma.go.jp/kaiyou/db/tide/suisan/station.php <- XmlService.parse()で解釈不可能なのでやむをえずPDICT(P:PORT), NDICT(N:NAME)に自力で書き出してる
+  //53-76まで入れとこう(千葉、東京、神奈川)
+  var PDICT = ['CS', 'ZF', 'MR', 'TT', 'KZ',
+               'QL', 'CB', 'TK', 'KW', 'YK',
+               'QS', 'HM', 'QN', 'Z1', 'OK',
+               'QO', 'MJ', 'QP', 'D4', 'QQ',
+               'CC', 'MC', 'D8', 'OD']; //変数PORTに入力可能な記号を一覧化したもの
+  var NDICT = ['銚子漁港', '勝浦', '布良', '館山', '木更津',
+               '千葉', '千葉港', '東京', '川崎', '京浜港',
+               '横浜', '本牧', '横須賀', '油壺', '岡田',
+               '神津島', '三宅島（坪田）', '三宅島（阿古）', '八丈島（八重根）', '八丈島（神湊）',
+               '父島', '南鳥島', '湘南港', '小田原']; //PDICT内の記号に対応する名前を一覧化したもの
   var LDICT = [
-    ['35°45', '35°08', '34°55', '34°59', '35°22', '35°34', '35°36', '35°39', '35°31', '35°28', '35°27', '35°26', '35°17', '35°10', '34°47', '34°13', '34°03', '34°04', '33°06', '33°08', '27°06', '24°17', '35°18', '35°14'],
-    ['140°52', '140°15', '139°50', '139°51', '139°55', '140°03', '140°06', '139°46', '139°45', '139°38', '139°39', '139°40', '139°39', '139°37', '139°23', '139°08', '139°33', '139°29', '139°46', '139°48', '142°12', '153°59', '139°29', '139°09']
+    ['35°45', '35°08', '34°55', '34°59', '35°22',
+     '35°34', '35°36', '35°39', '35°31', '35°28',
+     '35°27', '35°26', '35°17', '35°10', '34°47',
+     '34°13', '34°03', '34°04', '33°06', '33°08',
+     '27°06', '24°17', '35°18', '35°14'],
+    ['140°52', '140°15', '139°50', '139°51', '139°55',
+     '140°03', '140°06', '139°46', '139°45', '139°38',
+     '139°39', '139°40', '139°39', '139°37', '139°23',
+     '139°08', '139°33', '139°29', '139°46', '139°48',
+     '142°12', '153°59', '139°29', '139°09']
   ]; //PDICT内の記号に対応する位置情報を一覧化したもの
   
-  var URL = UrlFetchApp.fetch('http://www.data.jma.go.jp/kaiyou/data/db/tide/suisan/txt/' + y +'/' + PDICT[n] + '.txt');
+  var Distance = [];
+  for(var i=0;i<PDICT.length;i++) {
+    var LL = DMStoDEGjp(LDICT[0][i],LDICT[1][i]); //LL[0]:N / LL[1]:E
+    //当該地点:n,e / 計算地点:LL[0],LL[1]
+    var north = (LL[0]-n)*(LL[0]-n);
+    var east = (LL[1]-e)*(LL[1]-e);
+    var dist = north+east;
+    Distance[i] = Math.sqrt(dist);
+  }
+  
+  var point = Distance[0];
+  for(i=1;i<PDICT.length-1;i++) {
+    if(point>Distance[i]) {
+      var count = i;
+      point = Distance[i];
+    }
+  }
+  LL = DMStoDEGjp(LDICT[0][count],LDICT[1][count])
+  return [ PDICT[count], NDICT[count], LL[0], LL[1] ];
+}
+
+function getText(p, y, m, d) {  
+  var URL = UrlFetchApp.fetch('http://www.data.jma.go.jp/kaiyou/data/db/tide/suisan/txt/' + y +'/' + p + '.txt');
   var TXT = URL.getContentText();
   
   //うるう年判定
@@ -63,19 +90,41 @@ function getText(n, y, m, d) {
     var data = TXT.substr(( (137*arrMonth[m-1]) + (137*(d-1)) ),136);
   }
   
-  var place = NDICT[n];
-  var locate = 'https://www.google.com/maps/place/' + DMStoDEGjp(LDICT[0][n], LDICT[1][n]);
+  return data;
+}
+
+function TextConvert(txt) {
+  //getTextでゲットした生データを加工する関数
   
-  return [data, place, locate];
+  //さっきまで実装してたやつ 後で使う
+  var Max = [txt.substr(80,4),txt.substr(84,3)];
+  Logger.log('時刻: ' + parseInt(Max[0]) + ' 潮位: ' + parseInt(Max[1]));
 }
 
 function Main() {
-  var PORT = 6; //場所: 外部入力等で変更可能にしたい
-  var YEAR = 2017; //以下年月日: 外部入力等で変更可能にしたい
+  /* --------------------------------- 決める数値 ここから --------------------------------- */
+  //まず行く場所を決めます(DEGで指定 釣りをやる場所)
+  var NOW = ['35.63', '140.07'];
+  //次に日付を指定します(yyyy/m/d);
+  var YEAR = 2017;
   var MONTH = 7;
   var DAY = 3;
+  /* --------------------------------- 決める数値 ここまで --------------------------------- */
   
-  var info = getText(PORT, YEAR, MONTH, DAY); //info[0] = 指定日付の潮位データ行まるごと / info[1] = 湾名 / info[2] = 位置情報
+  /* --------------------------- 自動的にあれこれやるエリア ここから --------------------------- */
+  //最も近い場所を求めます
+  var PORT = searchNearPort(NOW[0], NOW[1]); //戻り値: 場所記号、場所名、緯度、経度
+  Logger.log('記号: ' + PORT[0] + ' / 湾名: ' + PORT[1] + ' / 緯度: ' + PORT[2] + ' / 経度: ' + PORT[3]);
   
-  Logger.log('' + info[0] + '\n' + info[1] + '\n' + info[2]);
+  //指定した日付でデータを収集します
+  var Row = getText(PORT[0], YEAR, MONTH, DAY); //指定日付の潮位データ行まるごと
+  Logger.log(Row);
+  //収集したデータを加工します
+  var Info = TextConvert(Row);
+  
+  //GoogleMapのURLを生成します
+  var toGoURL = 'https://www.google.com/maps/place/' + NOW[0] + ',' + NOW[1]; //行先の地図
+  var TideURL = 'https://www.google.com/maps/place/' + PORT[2] + ',' + PORT[3]; //行先から最も近い潮位データの観測地点
+  Logger.log('\n' + toGoURL + '\n' + TideURL);
+  /* --------------------------- 自動的にあれこれやるエリア ここまで --------------------------- */
 }
