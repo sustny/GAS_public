@@ -23,9 +23,8 @@ function Main() {
   //------------------------------- Settings -------------------------------
   
   //判定行(A)に1が入っている行を探す
-  var start = 0;
-  for(var i=1;i<dat.length;i++){
-    if(dat[i][0] === 1){
+  for(var i=1;i<dat.length;i++) {
+    if(dat[i][0] === 1) {
       break;
     }
   }
@@ -58,9 +57,11 @@ function Main() {
     }
   }
   
-  Hidden(); //ついでに実行
-  
   var program_end = new Date(); //処理時間計測用
   var program_sec = (program_end-program_start)/1000; //処理時間計測用
-  Logger.log("処理時間: " + program_sec + "秒");
+  Logger.log("Hidden()前処理時間: " + program_sec + "秒");
+  Hidden(); //ついでに実行
+  var program_end = new Date(); //処理時間計測用
+  var program_sec = (program_end-program_start)/1000; //処理時間計測用
+  Logger.log("Hidden()後処理時間: " + program_sec + "秒");
 }
