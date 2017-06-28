@@ -1,4 +1,4 @@
-# Google Apps Script
+# GAS for Notification
 
 ## 概要
 情弱なので最近存在に気付きました。
