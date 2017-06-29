@@ -21,7 +21,7 @@ function searchNearPort(n,e) {
   //ピタゴラスの定理で2点間の距離を求め、配列Distance[]に格納
   var Distance = [];
   for(var i=0;i<DICT.length-1;i++) {
-    Logger.log(i);
+    
     var LL = DMStoDEGjp(DICT[i+1][3],DICT[i+1][4]);
     var north = ( parseFloat(LL[0]) - parseFloat(n) )*( parseFloat(LL[0]) - parseFloat(n) );
     var east = ( parseFloat(LL[1]) - parseFloat(e) )*( parseFloat(LL[1]) - parseFloat(e) );
@@ -94,12 +94,12 @@ function TideInfo(NOW, YEAR, MONTH, DAY) {
   for(var i=0;i<2;i++) {
     DAY += i;
     if(i != 0) { message += '\n';}
-    message += '\n◆' + MONTH + '月' + DAY + '日(' + '日月火水木金土'[new Date(YEAR + '/' + MONTH + '/' + DAY).getDay()] + ')';
-  
     //指定した日付でデータを収集します
     var Row = getText(PORT[0], YEAR, MONTH, DAY); //指定日付の潮位データ行まるごと
     //収集したデータを加工します
     var Info = TextConvert(Row); //Info[i] -> 満潮時刻、満潮潮位の順に格納。i=0-7が満潮、i=8-15が干潮、データなしの場合99:99/999を格納
+    
+    message += '\n◆' + parseInt(Row.substr(74,2)) + '月' + parseInt(Row.substr(76,2)) + '日(' + '日月火水木金土'[new Date(YEAR + '/' + MONTH + '/' + DAY).getDay()] + ')';
 
     message += '\n◇潮位'
     if( parseInt(Info[0].substr(0,2)) < parseInt(Info[8].substr(0,2)) ) {
