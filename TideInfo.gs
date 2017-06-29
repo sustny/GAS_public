@@ -20,8 +20,9 @@ function searchNearPort(n,e) {
   
   //ピタゴラスの定理で2点間の距離を求め、配列Distance[]に格納
   var Distance = [];
-  for(var i=0;i<DICT.length;i++) {
-    var LL = DMStoDEGjp(DICT[i][2],DICT[i][3]);
+  for(var i=0;i<DICT.length-1;i++) {
+    Logger.log(i);
+    var LL = DMStoDEGjp(DICT[i+1][3],DICT[i+1][4]);
     var north = ( parseFloat(LL[0]) - parseFloat(n) )*( parseFloat(LL[0]) - parseFloat(n) );
     var east = ( parseFloat(LL[1]) - parseFloat(e) )*( parseFloat(LL[1]) - parseFloat(e) );
     var dist = north+east;
@@ -36,8 +37,8 @@ function searchNearPort(n,e) {
       short = Distance[i];
     }
   }
-  LL = DMStoDEGjp(DICT[count][2],DICT[count][3]);
-  return [ DICT[count][0], DICT[count][1], LL[0], LL[1] ]; //行先に最も近い観測地点の記号、名前、北緯、東経を返す
+  LL = DMStoDEGjp(DICT[count+1][3],DICT[count+1][4]);
+  return [ DICT[count+1][1], DICT[count+1][2], LL[0], LL[1] ]; //行先に最も近い観測地点の記号、名前、北緯、東経を返す
 }
 
 function getText(p, y, m, d) {  
