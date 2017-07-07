@@ -24,6 +24,10 @@ JavaScript互換かつGoogle系のサービスと相性がいいみたいなの�
 ### TideInfo.gs
 イベントが釣り関連だった場合、開催地から最も近い潮位観測地点の当日+翌日の潮位情報を生成し戻り値としてMain()へ引き渡す。
 
+→TideInfoのみ実装したものを別リポジトリで公開しています
+
+https://github.com/sustny/TideInfo
+
 ### LineNotify.gs
 EventInfo.gsとTideInfo.gsで生成されたイベント情報をLINEグループに通知する。
 
